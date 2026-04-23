@@ -19,6 +19,8 @@ import argparse
 import hashlib
 import json
 import os
+import urllib.error
+import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -39,6 +41,44 @@ class GenerationConfig:
     hf_token: str | None
     rules_version: str
     lexicon_version: str
+
+
+@dataclass
+class ModelAPIConfig:
+    """Configurazione API modello caricata da file .txt."""
+
+    model_name: str
+    api_token: str
+
+
+def load_model_api_config(path: Path) -> ModelAPIConfig:
+    """Legge model name e API token da file testuale key=value.
+
+    Formato atteso:
+        model_name=gemma-3-27b-it
+        api_token=hf_xxx
+    """
+    if not path.exists():
+        raise FileNotFoundError(f"Model config file not found: {path}")
+
+    values: dict[str, str] = {}
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if "=" not in line:
+            continue
+        key, value = line.split("=", maxsplit=1)
+        values[key.strip()] = value.strip()
+
+    model_name = values.get("model_name")
+    api_token = values.get("api_token")
+    if not model_name:
+        raise ValueError(f"Missing 'model_name' in {path}")
+    if not api_token:
+        raise ValueError(f"Missing 'api_token' in {path}")
+
+    return ModelAPIConfig(model_name=model_name, api_token=api_token)
 
 
 class SimpleSchemaValidator:
@@ -145,6 +185,45 @@ class LISGenerator:
         self.schema = json.loads(self.schema_path.read_text(encoding="utf-8"))
         self.cfg = cfg
         self.validator = SimpleSchemaValidator()
+
+    def _call_llm_api(self, prompt: str) -> str:
+        """Invia il prompt all'API Inference di Hugging Face e ritorna testo."""
+        if not self.cfg.hf_token:
+            return ""
+
+        url = f"https://api-inference.huggingface.co/models/{self.cfg.model_name}"
+        payload = {
+            "inputs": prompt,
+            "parameters": {"max_new_tokens": 400, "temperature": 0.2, "return_full_text": False},
+        }
+        req = urllib.request.Request(
+            url=url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={
+                "Authorization": f"Bearer {self.cfg.hf_token}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+
+        try:
+            with urllib.request.urlopen(req, timeout=60) as response:
+                body = response.read().decode("utf-8")
+        except urllib.error.URLError as exc:
+            return f"LLM API error: {exc}"
+
+        try:
+            parsed = json.loads(body)
+        except json.JSONDecodeError:
+            return f"Non-JSON response: {body[:240]}"
+
+        if isinstance(parsed, list) and parsed:
+            first = parsed[0]
+            if isinstance(first, dict):
+                return str(first.get("generated_text", ""))[:1000]
+        if isinstance(parsed, dict) and "error" in parsed:
+            return f"LLM API error: {parsed['error']}"
+        return str(parsed)[:1000]
 
     @staticmethod
     def _sha256(text: str) -> str:
@@ -260,6 +339,7 @@ class LISGenerator:
         # Hashiamo il prompt per tracciare la "ricetta" di generazione.
         prompt = self.retriever.build_prompt(context)
         prompt_hash = self._sha256(prompt)
+        llm_raw_output = self._call_llm_api(prompt)
 
         # Costruiamo tabella referenti/loci.
         entities = self._detect_entities(context.tokens)
@@ -309,6 +389,7 @@ class LISGenerator:
                 "timestamp": self._now_iso(),
                 "retrieved_rules_version": self.cfg.rules_version,
                 "retrieved_lexicon_version": self.cfg.lexicon_version,
+                "llm_raw_output_preview": llm_raw_output,
             },
         }
 
@@ -351,11 +432,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--schema", default="data/schema_annotazione.json", help="Path to JSON schema")
     parser.add_argument("--output", default="output/dataset_lis_final.jsonl", help="Output JSONL path")
     parser.add_argument("--dataset-version", default="v0.1.0")
-    parser.add_argument("--model-name", default="sapienzanlp/Minerva-7B-instruct-v1.0")
+    parser.add_argument("--model-name", default=None)
     parser.add_argument(
         "--hf-token",
-        default=os.getenv("HUGGINGFACE_TOKEN"),
-        help="Hugging Face token (default: env HUGGINGFACE_TOKEN)",
+        default=None,
+        help="Hugging Face token (override del valore nel file config)",
+    )
+    parser.add_argument(
+        "--model-config",
+        default="data/model_api_config.txt",
+        help="Path del file .txt con model_name e api_token",
     )
     parser.add_argument("--rules-version", default="regole_grammatica@1")
     parser.add_argument("--lexicon-version", default="vocabolario@1")
@@ -373,13 +459,18 @@ def main() -> None:
     rules_path = root / args.rules
     schema_path = root / args.schema
     output_path = root / args.output
+    model_config_path = root / args.model_config
+
+    model_api_cfg = load_model_api_config(model_config_path)
+    model_name = args.model_name or model_api_cfg.model_name
+    hf_token = args.hf_token or model_api_cfg.api_token or os.getenv("HUGGINGFACE_TOKEN")
 
     # Inizializza componenti pipeline.
     retriever = LISRetriever(vocab_path=vocab_path, rules_path=rules_path)
     cfg = GenerationConfig(
         dataset_version=args.dataset_version,
-        model_name=args.model_name,
-        hf_token=args.hf_token,
+        model_name=model_name,
+        hf_token=hf_token,
         rules_version=args.rules_version,
         lexicon_version=args.lexicon_version,
     )
