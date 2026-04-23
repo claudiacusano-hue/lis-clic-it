@@ -102,8 +102,9 @@ python scripts/generator.py
 Opzioni utili:
 
 ```bash
-export HUGGINGFACE_TOKEN="hf_***"
-python scripts/generator.py --input data/input_frasi.txt --output output/dataset_lis_final.jsonl --model-name sapienzanlp/Minerva-7B-instruct-v1.0 --hf-token "$HUGGINGFACE_TOKEN"
+cp data/model_api_config.txt data/model_api_config.local.txt
+# modifica model_name/api_token nel file .txt
+python scripts/generator.py --input data/input_frasi.txt --output output/dataset_lis_final.jsonl --model-config data/model_api_config.local.txt
 ```
 
 Per verificare il retriever in standalone:
