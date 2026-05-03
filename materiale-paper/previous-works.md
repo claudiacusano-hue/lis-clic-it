@@ -1,4 +1,6 @@
 
+# Synthetic Data for Low-resource Languages
+
 ## 1. Transcending Language Boundaries: Harnessing LLMs for Low-Resource Language Translation
 https://arxiv.org/abs/2411.11295
 
