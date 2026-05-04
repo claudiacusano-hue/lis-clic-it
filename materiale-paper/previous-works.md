@@ -66,6 +66,7 @@ This research addresses the limitations of traditional SLP models, which often p
 * FS-NET (Frame Selection Network): This novel component learns to create smooth transitions between signs by selecting the optimal subset of frames from dictionary signs to match a continuous signing sequence.
 * SIGNGAN: A video-to-video synthesis model that generates high-resolution, photo-realistic sign language videos from skeleton poses.
 * Hand Keypoint Loss: To overcome the common problem of blurred or inaccurate hand generation, the authors developed a specific loss function that focuses on hand keypoints, significantly improving the clarity and understandability of the signs.
+
 Evaluated on the large-scale meineDGS corpus, the model proved to be significantly more understandable to native deaf signers than previous skeletal or isolated-sign approaches.
 
 
