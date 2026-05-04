@@ -39,3 +39,42 @@ The approach successfully created three 50k-scale multi-domain benchmarks and re
       url={https://arxiv.org/abs/2512.02213}, 
 }
 ```
+
+## 3. LLM-based Sign Language Production
+https://ieeexplore.ieee.org/document/10903313
+
+This paper proposes a novel approach to Sign Language Production (SLP) that utilizes Large Language Models (LLMs) to translate natural language text directly into motion sequences. The methodology is split into two distinct phases:
+* Text-to-Pose Mapping: The researchers fine-tuned LLMs (LLaMA-7B and Vicuna-7B) using LoRA (Low-Rank Adaptation) to map spoken text to discrete pose tokens. These tokens are created using a VQ-VAE (Vector Quantized Variational Autoencoder) to represent body keypoints.
+* Pose-to-Image Synthesis: The generated poses are then processed by a Conditional VAE-GAN to create realistic images of a specific person (signer) performing the signs.
+The system was tested on the SynLibras-Pose (Brazilian Sign Language) and RWTH-PHOENIX-Weather (German Sign Language) datasets, demonstrating that LLMs can effectively handle the cross-modal task of translating text into coherent sign language motion sequences.
+
+```
+@inproceedings{silveira2024llm,
+  title={LLM-based Sign Language Production},
+  author={Silveira, Wellington and Mendon{\c{c}}a, Luca and De Bem, Rodrigo},
+  booktitle={2024 International Conference on Machine Learning and Applications (ICMLA)},
+  pages={1685--1690},
+  year={2024},
+  organization={IEEE}
+}
+```
+
+## 4. Signing at Scale: Learning to Co-Articulate Signs for Large-Scale Photo-Realistic Sign Language Production
+https://openaccess.thecvf.com/content/CVPR2022/html/Saunders_Signing_at_Scale_Learning_to_Co-Articulate_Signs_for_Large-Scale_Photo-Realistic_CVPR_2022_paper.html
+
+This research addresses the limitations of traditional SLP models, which often produce "under-articulated" signs that lack the natural flow, or co-articulation, found in human signing. The authors introduce a multi-stage framework designed for unconstrained domains of discourse:
+* FS-NET (Frame Selection Network): This novel component learns to create smooth transitions between signs by selecting the optimal subset of frames from dictionary signs to match a continuous signing sequence.
+* SIGNGAN: A video-to-video synthesis model that generates high-resolution, photo-realistic sign language videos from skeleton poses.
+* Hand Keypoint Loss: To overcome the common problem of blurred or inaccurate hand generation, the authors developed a specific loss function that focuses on hand keypoints, significantly improving the clarity and understandability of the signs.
+Evaluated on the large-scale meineDGS corpus, the model proved to be significantly more understandable to native deaf signers than previous skeletal or isolated-sign approaches.
+
+
+```
+@inproceedings{saunders2022signing,
+  title={Signing at scale: Learning to co-articulate signs for large-scale photo-realistic sign language production},
+  author={Saunders, Ben and Camgoz, Necati Cihan and Bowden, Richard},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  pages={5141--5151},
+  year={2022}
+}
+```
