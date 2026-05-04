@@ -79,3 +79,19 @@ Evaluated on the large-scale meineDGS corpus, the model proved to be significant
   year={2022}
 }
 ```
+# Risorse LIS
+---
+## 1. Grammatica della lingua dei segni italiana (LIS)
+https://edizionicafoscari.unive.it/it/edizioni/libri/978-88-6969-645-9/
+
+```
+@book{Branchini_2022,
+	doi = {10.30687/978-88-6969-645-9},
+	url = {https://doi.org/10.30687%2F978-88-6969-645-9},
+	year = 2022,
+	month = {dec},
+	publisher = {Fondazione Universit{\`{a}} Ca' Foscari},
+	author = {Chiara Branchini and Lara Mantovan},
+	title = {Grammatica della lingua dei segni italiana ({LIS})}
+}
+```
